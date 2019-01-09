@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.CameraServer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
 import edu.wpi.cscore.UsbCamera;
 
@@ -37,29 +38,41 @@ public class Robot extends TimedRobot {
   private final Joystick m_stick = new Joystick(0);  
   private static final int NUMBER_OF_CAMERAS = 2;
 
+  private static final int FRONT_CAMERA_PORT = 0;
+  private static final int REAR_CAMERA_PORT = 1;
+
+  private static final String FRONT_CAMERA_NAME = "front";
+  private static final String REAR_CAMERA_NAME = "rear";
+  HashMap<String, UsbCamera> cameraList = new HashMap<>();
+
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
    */
   @Override
   public void robotInit() {
-    List<UsbCamera> cameraList = new ArrayList<>();
-    for(int i = 0; i < NUMBER_OF_CAMERAS; i++){
-      cameraList.add(CameraServer.getInstance().startAutomaticCapture(i));
-    }
-
-    for(UsbCamera usbCamera : cameraList){
-      usbCamera.setResolution(32, 24);
-      usbCamera.setFPS(15);
+    cameraList.put(FRONT_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(FRONT_CAMERA_PORT));
+    cameraList.put(REAR_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(REAR_CAMERA_PORT));
+    for(UsbCamera usbCamera : cameraList.values()){
+      usbCamera.setResolution(320, 240);
+      usbCamera.setFPS(20);
       usbCamera.setExposureAuto();
     }
-
-    // cameraList.get(1).setExposureManual(70);
 
 
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+  }
+
+  private static void lowerResolution(UsbCamera camera){
+    camera.setResolution(32, 24);
+    camera.setFPS(30);
+  }
+
+  private static void upperResolution(UsbCamera camera){
+    camera.setResolution(640, 480);
+    camera.setFPS(5);
   }
 
   /**
@@ -108,11 +121,30 @@ public class Robot extends TimedRobot {
     }
   }
 
+  private boolean buttonZeroPrevious = false;
+  private boolean frontCameraUpper = false;
+
   /**
    * This function is called periodically during operator control.
    */
   @Override
   public void teleopPeriodic() {
+    boolean buttonZero = m_stick.getRawButton(1);
+    if(buttonZero){
+      if(!buttonZeroPrevious){
+        if(frontCameraUpper){
+          frontCameraUpper = false;
+        lowerResolution(cameraList.get(FRONT_CAMERA_NAME));
+        upperResolution(cameraList.get(REAR_CAMERA_NAME));
+      } else {
+        frontCameraUpper = true;
+        upperResolution(cameraList.get(FRONT_CAMERA_NAME));
+        lowerResolution(cameraList.get(REAR_CAMERA_NAME));
+      }
+    } 
+    }
+
+    buttonZeroPrevious = buttonZero;
     m_robotDrive.arcadeDrive(m_stick.getY(), m_stick.getX());
   }
 
