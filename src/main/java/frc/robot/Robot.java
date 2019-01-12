@@ -13,13 +13,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.CameraServer;
-
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 
 import edu.wpi.cscore.UsbCamera;
+import edu.wpi.cscore.VideoMode.PixelFormat;
+
+import static frc.robot.Constants.*;
 
 
 /**
@@ -34,16 +36,28 @@ public class Robot extends TimedRobot {
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  private final DifferentialDrive m_robotDrive = new DifferentialDrive(new VictorSP(1), new VictorSP(0));  
-  private final Joystick m_stick = new Joystick(0);  
-  private static final int NUMBER_OF_CAMERAS = 2;
+  private final DifferentialDrive m_robotDrive = new DifferentialDrive(new VictorSP(1), new VictorSP(0));
+  private final Spark m_arm = new Spark(2);
+  //private final DoubleSolenoid m_gripper = new DoubleSolenoid(1,2);
+  public final Joystick m_stick = new Joystick(0);
+  public final Joystick m_operatorJoystick = new Joystick(1); 
+  //private static final int NUMBER_OF_CAMERAS = 5;
 
   private static final int FRONT_CAMERA_PORT = 0;
   private static final int REAR_CAMERA_PORT = 1;
+  private static final int LEFT_CAMERA_PORT = 2;
+  private static final int RIGHT_CAMERA_PORT = 3;
+  private static final int PIXYVIEW_CAMERA_PORT = 4;
 
   private static final String FRONT_CAMERA_NAME = "front";
   private static final String REAR_CAMERA_NAME = "rear";
+  private static final String LEFT_CAMERA_NAME = "left";
+  private static final String RIGHT_CAMERA_NAME = "right";
+  private static final String PIXYVIEW_CAMERA_NAME = "pixy";
   HashMap<String, UsbCamera> cameraList = new HashMap<>();
+  //private Lift lift = new Lift();
+  private Lift2 lift2 = Lift2.getInstance();
+ 
 
   /**
    * This function is run when the robot is first started up and should be
@@ -52,10 +66,15 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     cameraList.put(FRONT_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(FRONT_CAMERA_PORT));
-    cameraList.put(REAR_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(REAR_CAMERA_PORT));
+    /*cameraList.put(REAR_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(REAR_CAMERA_PORT));
+    cameraList.put(LEFT_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(LEFT_CAMERA_PORT));
+    cameraList.put(RIGHT_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(RIGHT_CAMERA_PORT));
+    cameraList.put(PIXYVIEW_CAMERA_NAME, CameraServer.getInstance().startAutomaticCapture(PIXYVIEW_CAMERA_PORT));*/
     for(UsbCamera usbCamera : cameraList.values()){
-      usbCamera.setResolution(320, 240);
-      usbCamera.setFPS(20);
+      usbCamera.setVideoMode(PixelFormat.kMJPEG, 160, 120, 15);
+      //usbCamera.setResolution(80, 60);
+      //usbCamera.setFPS(5);
+      //usbCamera.setExposureManual(20);
       usbCamera.setExposureAuto();
     }
 
@@ -63,16 +82,18 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    
+    //lift.liftinit();
   }
 
   private static void lowerResolution(UsbCamera camera){
     camera.setResolution(32, 24);
-    camera.setFPS(30);
+    camera.setFPS(5);
   }
 
   private static void upperResolution(UsbCamera camera){
-    camera.setResolution(640, 480);
-    camera.setFPS(5);
+    camera.setResolution(320, 240);
+    camera.setFPS(15);
   }
 
   /**
@@ -123,6 +144,7 @@ public class Robot extends TimedRobot {
 
   private boolean buttonZeroPrevious = false;
   private boolean frontCameraUpper = false;
+  private boolean prevDisengageButton = false;
 
   /**
    * This function is called periodically during operator control.
@@ -144,8 +166,33 @@ public class Robot extends TimedRobot {
     } 
     }
 
+    // SmartDashboard.putNumber("pot", lift2.m_pot.get());
+   
+    boolean disengageButton = m_operatorJoystick.getRawButton(3);
+    if(m_operatorJoystick.getRawButton(2)){
+      lift2.setHeight(LIFT_HATCH_POSITION_MID);
+    } else if(m_operatorJoystick.getRawButton(1)){
+      lift2.setHeight(LIFT_HATCH_POSITION_LOW);
+    } else if(m_operatorJoystick.getRawButton(4)){
+      lift2.setHeight(LIFT_HATCH_POSITION_HIGH);
+    } 
+    else if(disengageButton){
+      if(!prevDisengageButton){
+      lift2.setHeight(lift2.getHeight() - HATCH_DISENGAGE_DISTANCE);
+      }
+    }
+    prevDisengageButton = disengageButton;
+    lift2.onLoop(Timer.getFPGATimestamp());
+    lift2.outputTelemetry();
+    
     buttonZeroPrevious = buttonZero;
     m_robotDrive.arcadeDrive(m_stick.getY(), m_stick.getX());
+    m_arm.set(-m_operatorJoystick.getRawAxis(1));
+    /*if(m_operatorJoystick.getRawButton(5)){
+      m_gripper.set(DoubleSolenoid.Value.kForward);
+    }else if(m_operatorJoystick.getRawButton(6)){
+      m_gripper.set(DoubleSolenoid.Value.kReverse);
+    }*/
   }
 
   /**
