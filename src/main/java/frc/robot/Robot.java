@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
   private static final String PIXYVIEW_CAMERA_NAME = "pixy";
   HashMap<String, UsbCamera> cameraList = new HashMap<>();
   //private Lift lift = new Lift();
-  private Lift2 lift2 = Lift2.getInstance();
+  private Lift lift2 = Lift.getInstance();
  
 
   /**

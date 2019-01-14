@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import static frc.robot.Constants.*;
 
-public class Lift2 extends Subsystem {
+public class Lift extends Subsystem {
 
     private double lastError = 0.0;
     private double integratedError = 0.0;
@@ -30,18 +30,18 @@ public class Lift2 extends Subsystem {
     private final VictorSP motor;
     private double manualPower = 0.0;
     private AnalogPotentiometer m_pot;
-    private static Lift2 instance;
+    private static Lift instance;
     private static final double absoluteTolerance = 0.01;
 
-    private Lift2() {
+    private Lift() {
         state = State.MANUAL;
         motor = new VictorSP(3);
         m_pot = new AnalogPotentiometer(0, LIFT_POT_FULL_RANGE, LIFT_POT_OFFSET);
     }
 
-    public static Lift2 getInstance() {
+    public static Lift getInstance() {
         if (instance == null) {
-            instance = new Lift2();
+            instance = new Lift();
         }
         return instance;
     }
