@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.hid;
 
 public class OperatorGamepad {
     private static OperatorGamepad instance;
@@ -16,22 +16,22 @@ public class OperatorGamepad {
     }
 
     public boolean liftToMidHatch() {
-        return operatorJoystick.getRawButton(2);
+        return operatorJoystick.bButton.get();
     }
 
     public boolean liftToLowHatch() {
-        return operatorJoystick.getRawButton(1);
+        return operatorJoystick.aButton.get();
     }
 
     public boolean liftToHighHatch() {
-        return operatorJoystick.getRawButton(4);
+        return operatorJoystick.yButton.get();
     }
 
-    public boolean disengageButton() {
-        return operatorJoystick.getRawButton(3);
+    public boolean disengageButtonTapped() {
+        return operatorJoystick.xButton.justClicked();
     }
 
     public double getGripperPower() {
-        return operatorJoystick.getRawAxis(1);
+        return operatorJoystick.getLeftStickY();
     }
 }

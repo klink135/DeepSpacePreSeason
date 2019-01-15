@@ -1,13 +1,24 @@
-package frc.robot;
+package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import static frc.robot.Constants.*;
+import static frc.robot.Constants.INCHES_TO_METERS;
 
 public class Lift extends Subsystem {
+    public static final double DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS = 28.0 * INCHES_TO_METERS;
+    public static final double HATCH_DISENGAGE_DISTANCE = 5.0 * INCHES_TO_METERS;
+    public static final double LIFT_DISTANCE_FROM_GROUND = 22 * INCHES_TO_METERS; // meters
+    public static final double LIFT_MAX_HEIGHT = 68 * INCHES_TO_METERS; // meters
+    public static final double LIFT_POT_MIN_POSITION_VOLTAGE = 0.723;
+    public static final double LIFT_POT_MAX_POSITION_VOLTAGE = 0.339; 
+    public static final double LIFT_POT_OFFSET = - LIFT_MAX_HEIGHT * (LIFT_POT_MIN_POSITION_VOLTAGE / (LIFT_POT_MAX_POSITION_VOLTAGE - LIFT_POT_MIN_POSITION_VOLTAGE)) + LIFT_DISTANCE_FROM_GROUND; //meters/volt
+    public static final double LIFT_POT_FULL_RANGE =  LIFT_MAX_HEIGHT * (1.0 / (LIFT_POT_MAX_POSITION_VOLTAGE - LIFT_POT_MIN_POSITION_VOLTAGE)); 
+    public static final double LIFT_HATCH_POSITION_LOW = (26 + (3.0/8.0)) * INCHES_TO_METERS;
+    public static final double LIFT_HATCH_POSITION_MID = LIFT_HATCH_POSITION_LOW + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
+    public static final double LIFT_HATCH_POSITION_HIGH = LIFT_HATCH_POSITION_MID + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
 
     private double lastError = 0.0;
     private double integratedError = 0.0;
@@ -72,8 +83,8 @@ public class Lift extends Subsystem {
         if(state != State.PID){
             state = State.PID;
         }
-        if(height < Constants.LIFT_DISTANCE_FROM_GROUND){
-            height = Constants.LIFT_DISTANCE_FROM_GROUND;
+        if(height < LIFT_DISTANCE_FROM_GROUND){
+            height = LIFT_DISTANCE_FROM_GROUND;
         } else if(height > LIFT_DISTANCE_FROM_GROUND + LIFT_MAX_HEIGHT){
             height = LIFT_DISTANCE_FROM_GROUND + LIFT_MAX_HEIGHT;
         }
