@@ -1,39 +1,37 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Joystick;
-
 public class OperatorGamepad {
     private static OperatorGamepad instance;
-    private Joystick operatorJoystick;
+    private XboxController operatorJoystick;
 
-    public static OperatorGamepad getInstance(){
-        if(instance == null){
+    public static OperatorGamepad getInstance() {
+        if (instance == null) {
             instance = new OperatorGamepad();
         }
         return instance;
     }
 
-    private OperatorGamepad(){
-        operatorJoystick = new Joystick(1);
+    private OperatorGamepad() {
+        operatorJoystick = new XboxController(1);
     }
 
-    public boolean liftToMidHatch(){
+    public boolean liftToMidHatch() {
         return operatorJoystick.getRawButton(2);
     }
 
-    public boolean liftToLowHatch(){
+    public boolean liftToLowHatch() {
         return operatorJoystick.getRawButton(1);
     }
 
-    public boolean liftToHighHatch(){
+    public boolean liftToHighHatch() {
         return operatorJoystick.getRawButton(4);
     }
 
-    public boolean disengageButton(){
+    public boolean disengageButton() {
         return operatorJoystick.getRawButton(3);
     }
 
-    public double getGripperPower(){
+    public double getGripperPower() {
         return operatorJoystick.getRawAxis(1);
     }
 }
