@@ -8,7 +8,7 @@
 package frc.robot;
 
 import frc.robot.hid.OperatorGamepad;
-import frc.robot.subsystems.Lift;
+import frc.robot.subsystem.Lift;
 
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoMode.PixelFormat;
