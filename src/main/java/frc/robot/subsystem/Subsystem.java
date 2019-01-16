@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystem;
 
 public abstract class Subsystem {
     public void zeroSensors(){}
