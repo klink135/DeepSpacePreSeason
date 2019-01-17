@@ -22,21 +22,24 @@ public class Drive extends Subsystem {
     private double rightMotorPower = 0.0;
     private double deadband;
 
-    private static final Waypoint[] TEST_POINTS = new Waypoint[] { new Waypoint(-2.0, -2.0, 0.0),
+    private static final Waypoint[] TEST_POINTS = new Waypoint[] { 
+        new Waypoint(2.0, 2.0, 0.0),
             new Waypoint(0.0, 0.0, 0.0) };
 
-    private static final double MAX_VELOCITY = 0.25;
-    private static final double MAX_ACCELERATION = 0.5;
-    private static final double WHEEL_BASE_WIDTH = 0.56515;
+    private static final double MAX_VELOCITY = 0.762;
+    private static final double MAX_ACCELERATION = 0.762;
     private static final double MAX_JERK = 0.1;
+    private static final double WHEEL_BASE_WIDTH = 0.56515;
     private static final double LOOP_TIME = 0.05;
     private static final Trajectory.Config DRIVE_PATH_CONFIG = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC,
             Trajectory.Config.SAMPLES_HIGH, LOOP_TIME, MAX_VELOCITY, MAX_ACCELERATION, MAX_JERK);
     private static final Trajectory TRAJECTORY = Pathfinder.generate(TEST_POINTS, DRIVE_PATH_CONFIG);
     private static final TankModifier MODIFIER = new TankModifier(TRAJECTORY).modify(WHEEL_BASE_WIDTH);
 
-    private static final int ENCODER_TICKS_PER_REVOLUTION = 900;
+    private static final int ENCODER_TICKS_PER_REVOLUTION = 213;
     private static final double WHEEL_DIAMETER = 6.0 * 0.0254;
+    private static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * Math.PI;
+
     public final Encoder leftEncoder;
     public final Encoder rightEncoder;
     private final EncoderFollower leftEncFollower;
@@ -45,14 +48,17 @@ public class Drive extends Subsystem {
     private Drive() {
         left = new Victor(1);
         right = new Victor(0);
-        leftEncoder = new Encoder(0, 1);
-        rightEncoder = new Encoder(2, 3);
-        leftEncoder.setDistancePerPulse((WHEEL_DIAMETER * 3.141592) / ((double) ENCODER_TICKS_PER_REVOLUTION));
-        rightEncoder.setDistancePerPulse((WHEEL_DIAMETER * 3.141592) / ((double) ENCODER_TICKS_PER_REVOLUTION));
+
+        leftEncoder = new Encoder(0, 1, false);
+        rightEncoder = new Encoder(2, 3, true);
+        leftEncoder.reset();
+        rightEncoder.reset();
+        leftEncoder.setDistancePerPulse(WHEEL_CIRCUMFERENCE / ((double) ENCODER_TICKS_PER_REVOLUTION));
+        rightEncoder.setDistancePerPulse(WHEEL_CIRCUMFERENCE / ((double) ENCODER_TICKS_PER_REVOLUTION));
         leftEncFollower = new EncoderFollower(MODIFIER.getLeftTrajectory());
         rightEncFollower = new EncoderFollower(MODIFIER.getRightTrajectory());
-        leftEncFollower.configurePIDVA(1.0, 0.0, 0.0, 1.0 / MAX_VELOCITY, 0);
-        rightEncFollower.configurePIDVA(1.0, 0.0, 0.0, 1.0 / MAX_VELOCITY, 0);
+        leftEncFollower.configurePIDVA(0.7, 0.0, 0.0, 1.0 / MAX_VELOCITY, 0);
+        rightEncFollower.configurePIDVA(0.7, 0.0, 0.0, 1.0 / MAX_VELOCITY, 0);
     }
 
     public static Drive getInstance() {
@@ -65,9 +71,13 @@ public class Drive extends Subsystem {
     @Override
     public void outputTelemetry() {
         SmartDashboard.putString("Drive state: ", state.toString());
-        SmartDashboard.putNumber("Left Encoder: ", leftEncoder.getDistance());
+        SmartDashboard.putNumber("Left Encoder: ", leftEncoder.get());
+        SmartDashboard.putNumber("Left Encoder Raw: ", leftEncoder.getRaw());
+        SmartDashboard.putNumber("Left Distance: ", leftEncoder.getDistance());
         SmartDashboard.putNumber("Left Rate: ", leftEncoder.getRate());
-        SmartDashboard.putNumber("Right Encoder: ", rightEncoder.getDistance());
+        SmartDashboard.putNumber("Right Encoder: ", rightEncoder.get());
+        SmartDashboard.putNumber("Right Encoder Raw: ", rightEncoder.getRaw());
+        SmartDashboard.putNumber("Left Distance: ", rightEncoder.getDistance());
         SmartDashboard.putNumber("Right Rate: ", rightEncoder.getRate());
     }
 
@@ -159,8 +169,8 @@ public class Drive extends Subsystem {
 
     public void configureTestPathFollow() {
         this.state = State.PATH_FOLLOWING;
-        leftEncFollower.configureEncoder(leftEncoder.getRaw(), ENCODER_TICKS_PER_REVOLUTION, WHEEL_DIAMETER);
-        rightEncFollower.configureEncoder(rightEncoder.getRaw(), ENCODER_TICKS_PER_REVOLUTION, WHEEL_DIAMETER);
+        leftEncFollower.configureEncoder(getLeftEncoder(), ENCODER_TICKS_PER_REVOLUTION, WHEEL_DIAMETER);
+        rightEncFollower.configureEncoder(getRightEncoder(), ENCODER_TICKS_PER_REVOLUTION, WHEEL_DIAMETER);
         pathConfigured = true;
     }
 
@@ -172,15 +182,21 @@ public class Drive extends Subsystem {
             right.set(-rightMotorPower);
             break;
         case PATH_FOLLOWING:
-            double leftOutput = leftEncFollower.calculate(leftEncoder.get());
-            double rightOutput = -rightEncFollower.calculate(rightEncoder.get());
-            left.set(leftOutput);
-            right.set(rightOutput);
+            left.set(leftEncFollower.calculate(getLeftEncoder()));
+            right.set(-rightEncFollower.calculate(getRightEncoder()));
             break;
         case STOP:
             stop();
             break;
         }
     }
+
+    private int getLeftEncoder(){
+        return leftEncoder.get();
+    }
+    private int getRightEncoder(){
+        return rightEncoder.get();
+    }
+
 
 }

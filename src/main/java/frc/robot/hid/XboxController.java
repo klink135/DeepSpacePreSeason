@@ -22,6 +22,8 @@ public class XboxController extends SuperJoystick {
     public TriggerBoolean leftTriggerButton = new TriggerBoolean(this, 2);
     public TriggerBoolean rightTriggerButton = new TriggerBoolean(this, 3);
 
+    // TODO add dpad, left/right x/y
+
     public void onUpdate() {
         xButton.onUpdate();
 

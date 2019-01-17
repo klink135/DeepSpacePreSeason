@@ -1,6 +1,6 @@
 [
   {
-    "artifact": "frcJava",
+    "artifact": "frcJava (in project DeepSpacePreSeason)",
     "target": "roborio",
     "debugfile": "frcJava_roborio.debugconfig",
     "project": "DeepSpacePreSeason",

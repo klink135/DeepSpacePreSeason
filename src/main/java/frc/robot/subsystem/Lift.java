@@ -13,12 +13,17 @@ public class Lift extends Subsystem {
     public static final double LIFT_DISTANCE_FROM_GROUND = 22 * INCHES_TO_METERS; // meters
     public static final double LIFT_MAX_HEIGHT = 68 * INCHES_TO_METERS; // meters
     public static final double LIFT_POT_MIN_POSITION_VOLTAGE = 0.723;
-    public static final double LIFT_POT_MAX_POSITION_VOLTAGE = 0.339; 
-    public static final double LIFT_POT_OFFSET = - LIFT_MAX_HEIGHT * (LIFT_POT_MIN_POSITION_VOLTAGE / (LIFT_POT_MAX_POSITION_VOLTAGE - LIFT_POT_MIN_POSITION_VOLTAGE)) + LIFT_DISTANCE_FROM_GROUND; //meters/volt
-    public static final double LIFT_POT_FULL_RANGE =  LIFT_MAX_HEIGHT * (1.0 / (LIFT_POT_MAX_POSITION_VOLTAGE - LIFT_POT_MIN_POSITION_VOLTAGE)); 
-    public static final double LIFT_HATCH_POSITION_LOW = (26 + (3.0/8.0)) * INCHES_TO_METERS;
-    public static final double LIFT_HATCH_POSITION_MID = LIFT_HATCH_POSITION_LOW + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
-    public static final double LIFT_HATCH_POSITION_HIGH = LIFT_HATCH_POSITION_MID + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
+    public static final double LIFT_POT_MAX_POSITION_VOLTAGE = 0.339;
+    public static final double LIFT_POT_OFFSET = -LIFT_MAX_HEIGHT
+            * (LIFT_POT_MIN_POSITION_VOLTAGE / (LIFT_POT_MAX_POSITION_VOLTAGE - LIFT_POT_MIN_POSITION_VOLTAGE))
+            + LIFT_DISTANCE_FROM_GROUND; // meters/volt
+    public static final double LIFT_POT_FULL_RANGE = LIFT_MAX_HEIGHT
+            * (1.0 / (LIFT_POT_MAX_POSITION_VOLTAGE - LIFT_POT_MIN_POSITION_VOLTAGE));
+    public static final double LIFT_HATCH_POSITION_LOW = (26 + (3.0 / 8.0)) * INCHES_TO_METERS;
+    public static final double LIFT_HATCH_POSITION_MID = LIFT_HATCH_POSITION_LOW
+            + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
+    public static final double LIFT_HATCH_POSITION_HIGH = LIFT_HATCH_POSITION_MID
+            + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
 
     private double lastError = 0.0;
     private double integratedError = 0.0;
@@ -40,14 +45,14 @@ public class Lift extends Subsystem {
     private State state;
     private final VictorSP motor;
     private double manualPower = 0.0;
-    private AnalogPotentiometer m_pot;
+    private AnalogPotentiometer pot;
     private static Lift instance;
     private static final double absoluteTolerance = 0.01;
 
     private Lift() {
         state = State.MANUAL;
         motor = new VictorSP(3);
-        m_pot = new AnalogPotentiometer(0, LIFT_POT_FULL_RANGE, LIFT_POT_OFFSET);
+        pot = new AnalogPotentiometer(0, LIFT_POT_FULL_RANGE, LIFT_POT_OFFSET);
     }
 
     public static Lift getInstance() {
@@ -66,7 +71,7 @@ public class Lift extends Subsystem {
 
     @Override
     public void outputTelemetry() {
-        SmartDashboard.putNumber("Lift pot value", m_pot.get());
+        SmartDashboard.putNumber("Lift pot value", pot.get());
         SmartDashboard.putNumber("Integrated Error * kI", integratedError * kI);
         SmartDashboard.putNumber("Error", lastError);
         SmartDashboard.putBoolean("Has been in tolerance", hasBeenInTolerance);
@@ -80,25 +85,27 @@ public class Lift extends Subsystem {
     private double goalHeight = 0.0;
 
     public void setHeight(double height) {
-        if(state != State.PID){
+        if (state != State.PID) {
             state = State.PID;
         }
-        if(height < LIFT_DISTANCE_FROM_GROUND){
+        if (height < LIFT_DISTANCE_FROM_GROUND) {
             height = LIFT_DISTANCE_FROM_GROUND;
-        } else if(height > LIFT_DISTANCE_FROM_GROUND + LIFT_MAX_HEIGHT){
+        } else if (height > LIFT_DISTANCE_FROM_GROUND + LIFT_MAX_HEIGHT) {
             height = LIFT_DISTANCE_FROM_GROUND + LIFT_MAX_HEIGHT;
         }
         this.goalHeight = height;
         integratedError = 0;
-    
+
     }
 
-    public double getHeight(){
+    public double getHeight() {
         return goalHeight;
     }
 
     boolean hasBeenInTolerance = false;
     double inToleranceValue = 0.0;
+
+    // TODO tune PID
 
     @Override
     public void onLoop(double timestamp) {
@@ -106,23 +113,24 @@ public class Lift extends Subsystem {
         case MANUAL:
             motor.set(manualPower);
         case PID:
-            double potVal = m_pot.get();
+            double potVal = pot.get();
             double error = goalHeight - potVal;
             double derivError = lastError - error;
             integratedError += error * (timestamp - lastTimestamp);
             double output = kP * error + kD * derivError + kI * integratedError;
-            if(Math.abs(error) < absoluteTolerance){
+            if (Math.abs(error) < absoluteTolerance) {
                 hasBeenInTolerance = true;
                 inToleranceValue = output;
             } else {
                 hasBeenInTolerance = false;
             }
 
-            if(hasBeenInTolerance){
+            if (hasBeenInTolerance) {
                 motor.set(inToleranceValue);
             } else {
                 motor.set(output);
             }
+
             lastError = error;
             lastTimestamp = timestamp;
         }

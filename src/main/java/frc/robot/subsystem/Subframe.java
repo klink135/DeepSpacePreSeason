@@ -2,6 +2,7 @@ package frc.robot.subsystem;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.VictorSP;
 
@@ -113,5 +114,6 @@ public class Subframe extends Subsystem {
 
     public void runRearRightWheel(double power) {
         rearRightWheelSpeed = power;
+        Solenoid
     }
 }
