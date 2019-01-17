@@ -114,6 +114,5 @@ public class Subframe extends Subsystem {
 
     public void runRearRightWheel(double power) {
         rearRightWheelSpeed = power;
-        Solenoid
     }
 }
