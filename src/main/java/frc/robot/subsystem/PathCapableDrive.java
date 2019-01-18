@@ -142,7 +142,7 @@ public class PathCapableDrive extends Subsystem {
             desiredHeading = 180.0 - Pathfinder.r2d(leftFollow.getHeading());
             angleDelta = desiredHeading - gyroHeading;
             // 1.125 percent per 180 degrees of error
-            turn = (1.125 / 180.0) * angleDelta;
+            turn = (3.0 / 180.0) * angleDelta;
             writePercentsToDrive(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn, -(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
             break;
         case STOPPED:
