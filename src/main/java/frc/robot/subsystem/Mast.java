@@ -1,21 +1,33 @@
 package frc.robot.subsystem;
 
 import edu.wpi.first.wpilibj.Solenoid;
-
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Mast extends Subsystem{
-    private final Solenoid mast = new Solenoid(0);
-
     private static Mast instance;
+    private final Solenoid mast;
+    private boolean isMastLifted = false;
 
-    public void Liftmast() {
-        mast.set(true);
+    private Mast(){
+        mast = new Solenoid(0);
+    }
+
+    public static Mast getInstance() {
+        if (instance == null) {
+            instance = new Mast();
+        }
+        return instance;  
+    }
+
+    public void liftMast() {
+        isMastLifted = true;
+        mast.set(isMastLifted);
     }
 
 
     @Override
     public void onLoop(double timestamp) {
+
     }
 
     @Override
@@ -25,12 +37,6 @@ public class Mast extends Subsystem{
 
     @Override
     public void outputTelemetry() {
-    }
-
-    public static Mast getInstance() {
-        if (instance == null) {
-            instance = new Mast();
-        }
-        return instance;  
+        SmartDashboard.putBoolean("Mast Lifted", isMastLifted);
     }
 }
