@@ -25,29 +25,28 @@ public class Lift extends Subsystem {
     public static final double LIFT_HATCH_POSITION_HIGH = LIFT_HATCH_POSITION_MID
             + DISTANCE_BETWEEN_HATCHES_AND_CARGO_HEIGHTS;
 
-    private double lastError = 0.0;
-    private double integratedError = 0.0;
-
-    /**
-     * lowest val = 3.5 => offset = -3.5 max val = 12.5 => range is 9 scaling 2/9
-     */
-
     private static final double kP = 12.0 * (1 / LIFT_POT_FULL_RANGE);
     private static final double kI = 0.0;
     private static final double kD = 0.0;
-
-    private double lastTimestamp = Timer.getFPGATimestamp();
+    private static final double absoluteTolerance = 0.01;
 
     private enum State {
         PID, MANUAL
     }
 
     private State state;
-    private final VictorSP motor;
+    private double lastError = 0.0;
+    private double integratedError = 0.0;
+    private double lastTimestamp = Timer.getFPGATimestamp();
     private double manualPower = 0.0;
+    private double goalHeight = 0.0;
+    private boolean hasBeenInTolerance = false;
+    private double inToleranceValue = 0.0;
+
+    private final VictorSP motor;
     private AnalogPotentiometer pot;
+
     private static Lift instance;
-    private static final double absoluteTolerance = 0.01;
 
     private Lift() {
         state = State.MANUAL;
@@ -82,8 +81,6 @@ public class Lift extends Subsystem {
 
     }
 
-    private double goalHeight = 0.0;
-
     public void setHeight(double height) {
         if (state != State.PID) {
             state = State.PID;
@@ -101,11 +98,6 @@ public class Lift extends Subsystem {
     public double getHeight() {
         return goalHeight;
     }
-
-    boolean hasBeenInTolerance = false;
-    double inToleranceValue = 0.0;
-
-    // TODO tune PID
 
     @Override
     public void onLoop(double timestamp) {

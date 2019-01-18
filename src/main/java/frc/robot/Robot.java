@@ -23,7 +23,9 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 
 import java.util.HashMap;
-
+// TODO remove all the junk from this
+// TODO add vision subsystem
+// TODO add subsystem manager
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -40,7 +42,7 @@ public class Robot extends TimedRobot {
   // VictorSP(1), new VictorSP(0));
   private final Drive robotDrive = Drive.getInstance();
   private final Spark gripperWrist = new Spark(2);
-  // public final Joystick m_operatorJoystick = new Joystick(1);
+  public final Joystick m_operatorJoystick = new Joystick(1);
 
   // TODO add gripper/gripperWrist to subsystem
   // TODO add vision to its own class
