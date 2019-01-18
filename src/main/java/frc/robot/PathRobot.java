@@ -72,14 +72,14 @@ public class PathRobot extends TimedRobot {
         leftMotor = new VictorSP(0);
         rightMotor = new VictorSP(1);
         
-        leftEncoder = new Encoder(0, 1, true);
+        leftEncoder = new Encoder(0, 1, false);
         leftEncoder.setDistancePerPulse((6.0 * 0.0254 * Math.PI) / 213);
 
-        rightEncoder = new Encoder(2, 3, false);
+        rightEncoder = new Encoder(2, 3, true);
         rightEncoder.setDistancePerPulse((6.0 * 0.0254 * Math.PI) / 213);
 
         config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 12.0, 2.0, 60.0);
-        points = new Waypoint[] { new Waypoint(1, -1, 0), new Waypoint(0, 0, 0) };
+        points = new Waypoint[] { new Waypoint(2, -2, 0), new Waypoint(0, 0, 0) };
         trajectory = Pathfinder.generate(points, config);
         modifier = new TankModifier(trajectory).modify(0.5);
 
@@ -88,11 +88,11 @@ public class PathRobot extends TimedRobot {
 
         leftFollow = new EncoderFollower(left);
         leftFollow.configureEncoder(0, 213, 0.1524);
-        leftFollow.configurePIDVA(0.6, 0, 0, 1.0/12.0, 0);
+        leftFollow.configurePIDVA(0.9, 0, .4, 1.0/12.0, 0);
 
         rightFollow = new EncoderFollower(right);
         rightFollow.configureEncoder(0, 213, 0.1524);
-        rightFollow.configurePIDVA(0.6, 0, 0, 1.0/12.0, 0);
+        rightFollow.configurePIDVA(0.9, 0, .4, 1.0/12.0, 0);
 
         chooser.setDefaultOption("Default Auto", DEFAULT_AUTO);
         chooser.addOption("Path Following Auto", CUSTOM_AUTO);
@@ -133,10 +133,10 @@ public class PathRobot extends TimedRobot {
     @Override
     public void autonomousPeriodic() {
         double gyroHeading = getHeading();
-        desiredHeading = 180 - Pathfinder.r2d(leftFollow.getHeading());
+        desiredHeading = 180 - Pathfinder.r2d(leftFollow.getHeading()); 
         angleDelta = desiredHeading - gyroHeading;
-        turn = 0.5 * (1.0 / 80.0) * angleDelta;
-        // turn = 0.0;
+        turn = 1.6 * (1.0 / 80.0) * angleDelta;
+        //turn = 0.0;
         leftMotor.set(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn);
         rightMotor.set(-(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
     }
