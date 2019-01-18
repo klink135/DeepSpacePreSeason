@@ -18,6 +18,8 @@ import jaci.pathfinder.modifiers.TankModifier;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.ADXL345_SPI;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -26,8 +28,13 @@ import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
+import edu.wpi.first.wpilibj.interfaces.Accelerometer;
+import edu.wpi.first.wpilibj.SPI;
+import com.kauailabs.navx.frc.AHRS;
 
 import java.util.HashMap;
+
+import org.opencv.core.Range;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -54,23 +61,25 @@ public class PathRobot extends TimedRobot {
     Encoder rightEncoder;
     Trajectory left;
     Trajectory right;
+    AHRS gyro;
 
-    // Note, doesn't work
+    // Note, doesn't work... sorta
 
     @Override
     public void robotInit() {
-        leftMotor = new VictorSP(1);
-        rightMotor = new VictorSP(0);
+        gyro = new AHRS(SPI.Port.kMXP);
+
+        leftMotor = new VictorSP(0);
+        rightMotor = new VictorSP(1);
         
-        leftEncoder = new Encoder(0, 1, false);
+        leftEncoder = new Encoder(0, 1, true);
         leftEncoder.setDistancePerPulse((6.0 * 0.0254 * Math.PI) / 213);
 
-        rightEncoder = new Encoder(2, 3, true);
+        rightEncoder = new Encoder(2, 3, false);
         rightEncoder.setDistancePerPulse((6.0 * 0.0254 * Math.PI) / 213);
 
-        config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.05, 0.762,
-                0.762, 0.1);
-        points = new Waypoint[] { new Waypoint(-2, -2, 0), new Waypoint(0, 0, 0) };
+        config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, 0.02, 12.0, 2.0, 60.0);
+        points = new Waypoint[] { new Waypoint(1, -1, 0), new Waypoint(0, 0, 0) };
         trajectory = Pathfinder.generate(points, config);
         modifier = new TankModifier(trajectory).modify(0.5);
 
@@ -79,11 +88,11 @@ public class PathRobot extends TimedRobot {
 
         leftFollow = new EncoderFollower(left);
         leftFollow.configureEncoder(0, 213, 0.1524);
-        leftFollow.configurePIDVA(0.7, 0, 0, 1 / 0.762, 0);
+        leftFollow.configurePIDVA(0.6, 0, 0, 1.0/12.0, 0);
 
         rightFollow = new EncoderFollower(right);
         rightFollow.configureEncoder(0, 213, 0.1524);
-        rightFollow.configurePIDVA(0.7, 0, 0, 1 / 0.762, 0);
+        rightFollow.configurePIDVA(0.6, 0, 0, 1.0/12.0, 0);
 
         chooser.setDefaultOption("Default Auto", DEFAULT_AUTO);
         chooser.addOption("Path Following Auto", CUSTOM_AUTO);
@@ -92,6 +101,11 @@ public class PathRobot extends TimedRobot {
 
     @Override
     public void robotPeriodic() {
+        SmartDashboard.putBoolean("GYRO??", gyro.isConnected());
+        SmartDashboard.putNumber("Gyro", getHeading());
+        SmartDashboard.putNumber("Turn Correction", turn);
+        SmartDashboard.putNumber("Angle Delta", angleDelta);
+        SmartDashboard.putNumber("Desired Heading", desiredHeading);
         SmartDashboard.putNumber("Left Encoder", leftEncoder.get());
         SmartDashboard.putNumber("Left Distance", leftEncoder.getDistance());
         SmartDashboard.putNumber("Right Encoder", rightEncoder.get());
@@ -103,6 +117,8 @@ public class PathRobot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+        gyro.zeroYaw();
+
         leftEncoder.reset();
         rightEncoder.reset();
 
@@ -110,10 +126,27 @@ public class PathRobot extends TimedRobot {
         rightOffset = -rightEncoder.get();
     }
 
+    double desiredHeading = 0.0;
+    double turn = 0.0;
+    double angleDelta = 0.0;
+    
     @Override
     public void autonomousPeriodic() {
-        leftMotor.set(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)));
-        rightMotor.set(-rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset)));
+        double gyroHeading = getHeading();
+        desiredHeading = 180 - Pathfinder.r2d(leftFollow.getHeading());
+        angleDelta = desiredHeading - gyroHeading;
+        turn = 0.5 * (1.0 / 80.0) * angleDelta;
+        // turn = 0.0;
+        leftMotor.set(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn);
+        rightMotor.set(-(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
+    }
+
+    private double getHeading(){
+        double gyroHeading = gyro.getYaw();
+        // if(gyroHeading < 0){
+        //     gyroHeading += 360.0;
+        // }
+        return gyroHeading;
     }
 
     @Override

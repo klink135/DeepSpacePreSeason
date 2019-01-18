@@ -33,7 +33,7 @@ import java.util.HashMap;
  */
 public class Robot extends TimedRobot {
   private static final String DEFAULT_AUTO = "Default";
-  private static final String CUSTOM_AUTO = "Path Follpwing Test";
+  private static final String CUSTOM_AUTO = "Path Following Test";
   private String autoSelected;
   private final SendableChooser<String> chooser = new SendableChooser<>();
   // TODO private final DifferentialDrive robotDrive = new DifferentialDrive(new
