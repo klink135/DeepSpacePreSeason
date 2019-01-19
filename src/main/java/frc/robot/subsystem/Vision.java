@@ -7,7 +7,7 @@ import edu.wpi.first.cameraserver.CameraServer;
 public class Vision extends Subsystem {
     private static Vision instance;
 
-    private enum Camera {
+    public enum Camera {
         FRONT(0), REAR(1);
 
         Camera(int cameraPort) {

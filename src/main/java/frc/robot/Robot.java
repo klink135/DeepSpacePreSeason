@@ -10,10 +10,8 @@ package frc.robot;
 import frc.robot.hid.OperatorGamepad;
 import frc.robot.subsystem.Drive;
 import frc.robot.subsystem.Lift;
-
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.cscore.VideoMode.PixelFormat;
-import edu.wpi.first.cameraserver.CameraServer;
+import frc.robot.subsystem.Vision;
+import frc.robot.subsystem.Vision.Camera;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,9 +20,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 
-import java.util.HashMap;
 // TODO remove all the junk from this
-// TODO add vision subsystem
 // TODO add subsystem manager
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -41,31 +37,16 @@ public class Robot extends TimedRobot {
   // TODO private final DifferentialDrive robotDrive = new DifferentialDrive(new
   // VictorSP(1), new VictorSP(0));
   private final Drive robotDrive = Drive.getInstance();
+  private final Vision vision = Vision.getInstance();
   private final Spark gripperWrist = new Spark(2);
   public final Joystick m_operatorJoystick = new Joystick(1);
 
   // TODO add gripper/gripperWrist to subsystem
-  // TODO add vision to its own class
   // TODO add SuperJoystick extension of driver joystick
   // TODO clean out old code
 
   // private final DoubleSolenoid m_gripper = new DoubleSolenoid(1,2);
   public final Joystick driverJoystick = new Joystick(0);
-  // private static final int NUMBER_OF_CAMERAS = 5;
-  // private static final int FRONT_CAMERA_PORT = 0;
-  // private static final String FRONT_CAMERA_NAME = "front";
-  // private static final int REAR_CAMERA_PORT = 1;
-  // private static final String REAR_CAMERA_NAME = "rear";
-
-  /*
-   * private static final int LEFT_CAMERA_PORT = 2; private static final int
-   * RIGHT_CAMERA_PORT = 3; private static final int PIXYVIEW_CAMERA_PORT = 4;
-   * 
-   * private static final String LEFT_CAMERA_NAME = "left"; private static final
-   * String RIGHT_CAMERA_NAME = "right"; private static final String
-   * PIXYVIEW_CAMERA_NAME = "pixy";
-   */
-  // HashMap<String, UsbCamera> cameraList = new HashMap<>();
   // private Lift lift = Lift.getInstance();
   private OperatorGamepad operatorGamepad = OperatorGamepad.getInstance();
 
@@ -75,43 +56,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    // cameraList.put(FRONT_CAMERA_NAME,
-    // CameraServer.getInstance().startAutomaticCapture(FRONT_CAMERA_PORT));
-    // cameraList.put(REAR_CAMERA_NAME,
-    // CameraServer.getInstance().startAutomaticCapture(REAR_CAMERA_PORT));
-    /*
-     * cameraList.put(LEFT_CAMERA_NAME,
-     * CameraServer.getInstance().startAutomaticCapture(LEFT_CAMERA_PORT));
-     * cameraList.put(RIGHT_CAMERA_NAME,
-     * CameraServer.getInstance().startAutomaticCapture(RIGHT_CAMERA_PORT));
-     * cameraList.put(PIXYVIEW_CAMERA_NAME,
-     * CameraServer.getInstance().startAutomaticCapture(PIXYVIEW_CAMERA_PORT));
-     */
-    // for (UsbCamera usbCamera : cameraList.values()) {
-    // usbCamera.setVideoMode(PixelFormat.kMJPEG, 160, 120, 15);
-    // // usbCamera.setResolution(80, 60);
-    // // usbCamera.setFPS(5);
-    // // usbCamera.setExposureManual(20);
-    // usbCamera.setExposureAuto();
-    // }
-
     chooser.setDefaultOption("Default Auto", DEFAULT_AUTO);
     chooser.addOption("Path Following Auto", CUSTOM_AUTO);
     SmartDashboard.putData("Auto choices", chooser);
 
     // lift.liftinit();
   }
-
-  private static void lowerResolution(UsbCamera camera) {
-    camera.setResolution(32, 24);
-    camera.setFPS(5);
-  }
-
-  private static void upperResolution(UsbCamera camera) {
-    camera.setResolution(320, 240);
-    camera.setFPS(15);
-  }
-
   /**
    * This function is called every robot packet, no matter the mode. Use this for
    * items like diagnostics that you want ran during disabled, autonomous,
@@ -174,21 +124,19 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    // boolean buttonZero = driverJoystick.getRawButton(1);
-    // if (buttonZero) {
-    // if (!buttonZeroPrevious) {
-    // if (frontCameraUpper) {
-    // frontCameraUpper = false;
-    // lowerResolution(cameraList.get(FRONT_CAMERA_NAME));
-    // upperResolution(cameraList.get(REAR_CAMERA_NAME));
-    // } else {
-    // frontCameraUpper = true;
-    // upperResolution(cameraList.get(FRONT_CAMERA_NAME));
-    // lowerResolution(cameraList.get(REAR_CAMERA_NAME));
-    // }
-    // }
-    // }
-    // buttonZeroPrevious = buttonZero;
+    boolean buttonZero = driverJoystick.getRawButton(1);
+    if (buttonZero) {
+    if (!buttonZeroPrevious) {
+    if (frontCameraUpper) {
+    frontCameraUpper = false;
+    vision.focus(Camera.REAR);
+    } else {
+    frontCameraUpper = true;
+    vision.focus(Camera.FRONT);
+    }
+    }
+    }
+    buttonZeroPrevious = buttonZero;
 
     // SmartDashboard.putNumber("pot", lift2.m_pot.get());
 
