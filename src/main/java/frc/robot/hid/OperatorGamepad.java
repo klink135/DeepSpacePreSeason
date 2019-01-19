@@ -2,7 +2,7 @@ package frc.robot.hid;
 // FIXME
 public class OperatorGamepad {
     private static OperatorGamepad instance;
-    private XboxController operatorJoystick;
+    private final XboxController operatorJoystick;
 
     public static OperatorGamepad getInstance() {
         if (instance == null) {
@@ -33,5 +33,12 @@ public class OperatorGamepad {
 
     public double getGripperPower() {
         return operatorJoystick.getLeftStickY();
+    }
+
+    public double getLeftStickY(){
+        return operatorJoystick.getLeftStickY();
+    }
+    public double getRightStickY(){
+        return operatorJoystick.getRightStickY();
     }
 }

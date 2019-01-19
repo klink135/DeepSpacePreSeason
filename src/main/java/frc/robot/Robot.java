@@ -62,6 +62,7 @@ public class Robot extends TimedRobot {
 
     // lift.liftinit();
   }
+
   /**
    * This function is called every robot packet, no matter the mode. Use this for
    * items like diagnostics that you want ran during disabled, autonomous,
@@ -94,7 +95,6 @@ public class Robot extends TimedRobot {
     robotDrive.rightEncoder.reset();
     robotDrive.configureTestPathFollow();
 
-
     // autoSelected = SmartDashboard.getString("Auto Selector", DEFAULT_AUTO);
     System.out.println("Auto selected: " + autoSelected);
   }
@@ -126,15 +126,15 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     boolean buttonZero = driverJoystick.getRawButton(1);
     if (buttonZero) {
-    if (!buttonZeroPrevious) {
-    if (frontCameraUpper) {
-    frontCameraUpper = false;
-    vision.focus(Camera.REAR);
-    } else {
-    frontCameraUpper = true;
-    vision.focus(Camera.FRONT);
-    }
-    }
+      if (!buttonZeroPrevious) {
+        if (frontCameraUpper) {
+          frontCameraUpper = false;
+          vision.focus(Camera.REAR);
+        } else {
+          frontCameraUpper = true;
+          vision.focus(Camera.FRONT);
+        }
+      }
     }
     buttonZeroPrevious = buttonZero;
 

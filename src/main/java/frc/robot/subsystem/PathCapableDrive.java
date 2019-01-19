@@ -116,6 +116,9 @@ public class PathCapableDrive extends Subsystem {
     @Override
     public void outputTelemetry() {
         SmartDashboard.putString("Drive State", state.toString());
+        SmartDashboard.putNumber("Max Velocity", maxVelocity);
+        SmartDashboard.putNumber("Dt", dt);
+        SmartDashboard.putNumber("Max Acceleration", maxAcceleration);
         SmartDashboard.putNumber("Left Percent", leftPercent);
         SmartDashboard.putNumber("Right Percent", rightPercent);
         SmartDashboard.putNumber("Gyro", getHeading());
@@ -130,6 +133,10 @@ public class PathCapableDrive extends Subsystem {
 
     private double lastTimestamp = Timer.getFPGATimestamp();
     private double lastVelocity = 0.0;
+    private double lastDistance = 0.0;
+    private double maxVelocity = 0.0;
+    private double maxAcceleration = 0.0;
+    private double dt = 0.0;
 
     @Override
     public void onLoop(double timestamp) {
@@ -158,7 +165,15 @@ public class PathCapableDrive extends Subsystem {
             stop();
             break;
         }
-        
+        double distance = leftEncoder.getDistance();
+        dt = timestamp - lastTimestamp;
+        double velocity = (distance - lastDistance) / dt;
+        double acceleration = (velocity - lastVelocity) / dt;
+        maxVelocity = Math.max(Math.abs(velocity), maxVelocity);
+        maxAcceleration = Math.max(Math.abs(acceleration), maxAcceleration);
+        lastVelocity = velocity;
+        lastDistance = distance;
+        lastTimestamp = timestamp;
     }
 
     @Override
@@ -216,6 +231,14 @@ public class PathCapableDrive extends Subsystem {
         }
     }
 
+    public void rawTankDrive(double leftPower, double rightPower) {
+        if (state != State.OPEN_LOOP) {
+            state = State.OPEN_LOOP;
+        }
+        leftPercent = leftPower;
+        rightPercent = rightPower;
+    }
+
     public void tankDrive(double leftPower, double rightPower) {
         tankDrive(leftPower, rightPower, true);
     }
@@ -225,7 +248,7 @@ public class PathCapableDrive extends Subsystem {
             this.state = State.OPEN_LOOP;
         }
         leftPercent = applyDeadband(limit(leftPower), deadband);
-        rightPercent = applyDeadband(limit(leftPower), deadband);
+        rightPercent = applyDeadband(limit(rightPower), deadband);
         if (squareInputs) {
             leftPercent = Math.copySign(leftPower * leftPower, leftPower);
             rightPercent = Math.copySign(rightPower * rightPower, rightPower);
