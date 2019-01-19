@@ -1,6 +1,7 @@
 package frc.robot.hid;
 
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
+import frc.robot.hid.SuperJoystick;
 
 public class Extreme3dPro extends SuperJoystick {
     public JoystickButton trigger = new JoystickButton(this, 1);

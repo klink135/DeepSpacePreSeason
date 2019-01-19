@@ -4,6 +4,7 @@ import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import jaci.pathfinder.Pathfinder;
@@ -61,6 +62,7 @@ public class PathCapableDrive extends Subsystem {
     private double angleDelta = 0.0;
     private double leftPercent = 0.0;
     private double rightPercent = 0.0;
+    private double deadband = 0.01;
 
     // Instance
     private static PathCapableDrive instance;
@@ -113,6 +115,9 @@ public class PathCapableDrive extends Subsystem {
 
     @Override
     public void outputTelemetry() {
+        SmartDashboard.putString("Drive State", state.toString());
+        SmartDashboard.putNumber("Left Percent", leftPercent);
+        SmartDashboard.putNumber("Right Percent", rightPercent);
         SmartDashboard.putNumber("Gyro", getHeading());
         SmartDashboard.putNumber("Turn Correction", turn);
         SmartDashboard.putNumber("Angle Delta", angleDelta);
@@ -123,11 +128,14 @@ public class PathCapableDrive extends Subsystem {
         SmartDashboard.putNumber("Right Distance", rightEncoder.getDistance());
     }
 
+    private double lastTimestamp = Timer.getFPGATimestamp();
+    private double lastVelocity = 0.0;
+
     @Override
     public void onLoop(double timestamp) {
         switch (state) {
         case OPEN_LOOP:
-            writePercentsToDrive(leftPercent, rightPercent);
+            writePercentsToDrive(leftPercent, -rightPercent);
             break;
         case PATH_FOLLOWING_INIT:
             gyro.zeroYaw();
@@ -141,14 +149,16 @@ public class PathCapableDrive extends Subsystem {
             double gyroHeading = getHeading();
             desiredHeading = 180.0 - Pathfinder.r2d(leftFollow.getHeading());
             angleDelta = desiredHeading - gyroHeading;
-            // 1.125 percent per 180 degrees of error
+            // x percent per 180 degrees of error
             turn = (3.0 / 180.0) * angleDelta;
-            writePercentsToDrive(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn, -(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
+            writePercentsToDrive(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn,
+                    -(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
             break;
         case STOPPED:
             stop();
             break;
         }
+        
     }
 
     @Override
@@ -165,17 +175,90 @@ public class PathCapableDrive extends Subsystem {
         this.rightPercent = right;
     }
 
-    public void startPath(){
+    public void startPath() {
         state = State.PATH_FOLLOWING_INIT;
+    }
+
+    public void setDeadband(double deadband) {
+        this.deadband = deadband;
+    }
+
+    public void arcadeDrive(double x, double zRotation) {
+        arcadeDrive(x, zRotation, false);
+    }
+
+    public void arcadeDrive(double xSpeed, double zRotation, boolean squareInputs) {
+        if (this.state != State.OPEN_LOOP) {
+            this.state = State.OPEN_LOOP;
+        }
+
+        xSpeed = applyDeadband(limit(xSpeed), deadband);
+        zRotation = applyDeadband(limit(zRotation), deadband);
+
+        double maxInput = Math.copySign(Math.max(Math.abs(xSpeed), Math.abs(zRotation)), xSpeed);
+
+        if (xSpeed >= 0.0) {
+            if (zRotation >= 0.0) {
+                leftPercent = maxInput;
+                rightPercent = xSpeed - zRotation;
+            } else {
+                leftPercent = xSpeed + zRotation;
+                rightPercent = maxInput;
+            }
+        } else {
+            if (zRotation >= 0.0) {
+                leftPercent = xSpeed + zRotation;
+                rightPercent = maxInput;
+            } else {
+                leftPercent = maxInput;
+                rightPercent = xSpeed - zRotation;
+            }
+        }
+    }
+
+    public void tankDrive(double leftPower, double rightPower) {
+        tankDrive(leftPower, rightPower, true);
+    }
+
+    public void tankDrive(double leftPower, double rightPower, boolean squareInputs) {
+        if (this.state != State.OPEN_LOOP) {
+            this.state = State.OPEN_LOOP;
+        }
+        leftPercent = applyDeadband(limit(leftPower), deadband);
+        rightPercent = applyDeadband(limit(leftPower), deadband);
+        if (squareInputs) {
+            leftPercent = Math.copySign(leftPower * leftPower, leftPower);
+            rightPercent = Math.copySign(rightPower * rightPower, rightPower);
+        }
     }
 
     private void writePercentsToDrive(double left, double right) {
         leftMotor.set(left);
-        rightMotor.set(left);
+        rightMotor.set(right);
     }
 
     private double getHeading() {
         return gyro.getYaw();
     }
 
+    private double limit(double val) {
+        if (val > 1.0) {
+            return 1.0;
+        } else if (val < -1.0) {
+            return -1.0;
+        }
+        return val;
+    }
+
+    private double applyDeadband(double value, double deadband) {
+        if (Math.abs(value) > deadband) {
+            if (value > 0.0) {
+                return (value - deadband) / (1.0 - deadband);
+            } else {
+                return (value + deadband) / (1.0 - deadband);
+            }
+        } else {
+            return 0.0;
+        }
+    }
 }

@@ -35,7 +35,7 @@ public class PathRobot extends TimedRobot {
     private static final double MAX_ACCELERATION = 2.0;
     private static final double MAX_JERK = 60.0;
     private static final double DT = 0.02;
-    private static final double FOLLOWER_KP = 0.6;
+    private static final double FOLLOWER_KP = 1.2;
     private static final double FOLLOWER_KI = 0.0;
     private static final double FOLLOWER_KD = 0.0;
     private static final double FOLLOWER_KV = 1.0 / MAX_VELOCITY;
