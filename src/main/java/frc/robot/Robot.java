@@ -20,9 +20,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 
-import java.util.HashMap;
 // TODO remove all the junk from this
-// TODO add vision subsystem
 // TODO add subsystem manager
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -44,7 +42,6 @@ public class Robot extends TimedRobot {
   public final Joystick m_operatorJoystick = new Joystick(1);
 
   // TODO add gripper/gripperWrist to subsystem
-  // TODO add vision to its own class
   // TODO add SuperJoystick extension of driver joystick
   // TODO clean out old code
 
