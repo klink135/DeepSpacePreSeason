@@ -10,6 +10,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystem.PathCapableDrive;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -18,6 +19,7 @@ public class PathRobot2 extends TimedRobot {
     private static final String CUSTOM_AUTO = "Path Following Test";
     private final SendableChooser<String> chooser = new SendableChooser<>();
     private PathCapableDrive drive = PathCapableDrive.getInstance();
+    public final Joystick driverJoystick = new Joystick(0);
 
     @Override
     public void robotInit() {
@@ -42,7 +44,8 @@ public class PathRobot2 extends TimedRobot {
     }
     @Override
     public void teleopPeriodic() {
-
+        drive.arcadeDrive(-driverJoystick.getRawAxis(1), driverJoystick.getRawAxis(0));
+        drive.onLoop(Timer.getFPGATimestamp());
     }
 
     @Override

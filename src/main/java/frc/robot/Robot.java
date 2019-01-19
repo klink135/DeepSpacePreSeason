@@ -93,6 +93,8 @@ public class Robot extends TimedRobot {
     robotDrive.leftEncoder.reset();
     robotDrive.rightEncoder.reset();
     robotDrive.configureTestPathFollow();
+
+
     // autoSelected = SmartDashboard.getString("Auto Selector", DEFAULT_AUTO);
     System.out.println("Auto selected: " + autoSelected);
   }

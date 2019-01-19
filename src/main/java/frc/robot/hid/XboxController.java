@@ -1,6 +1,9 @@
 package frc.robot.hid;
 
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
+import frc.robot.hid.SuperButton;
+import frc.robot.hid.SuperJoystick;
+import frc.robot.hid.TriggerBoolean;
 import edu.wpi.first.hal.HAL;
 
 public class XboxController extends SuperJoystick {
