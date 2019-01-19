@@ -21,8 +21,8 @@ public class PathCapableDrive extends Subsystem {
     private static final double WHEEL_DIAMETER = 6.0 * INCHES_TO_METERS;
     private static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * Math.PI;
     private static final double WHEELBASE_WIDTH = 0.56515;
-    private static final double MAX_VELOCITY = 12.0;
-    private static final double MAX_ACCELERATION = 2.0;
+    private static final double MAX_VELOCITY = 3.2;
+    private static final double MAX_ACCELERATION = 50;
     private static final double MAX_JERK = 60.0;
     private static final double DT = 0.02;
     private static final double FOLLOWER_KP = 0.6;
@@ -150,7 +150,7 @@ public class PathCapableDrive extends Subsystem {
             desiredHeading = 180.0 - Pathfinder.r2d(leftFollow.getHeading());
             angleDelta = desiredHeading - gyroHeading;
             // x percent per 180 degrees of error
-            turn = (3.0 / 180.0) * angleDelta;
+            turn = (15.0 / 180.0) * angleDelta;
             writePercentsToDrive(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn,
                     -(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
             break;
