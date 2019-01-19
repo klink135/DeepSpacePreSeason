@@ -12,6 +12,8 @@ import jaci.pathfinder.Trajectory;
 import jaci.pathfinder.Waypoint;
 import jaci.pathfinder.followers.EncoderFollower;
 import jaci.pathfinder.modifiers.TankModifier;
+import java.io.File;
+import java.io.FileNotFoundException;;
 
 // NOTE: STILL VERY EXPERIMENTAL. DO NOT TRUST.
 public class PathCapableDrive extends Subsystem {
@@ -22,12 +24,12 @@ public class PathCapableDrive extends Subsystem {
     private static final double WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER * Math.PI;
     private static final double WHEELBASE_WIDTH = 0.56515;
     private static final double MAX_VELOCITY = 3.2;
-    private static final double MAX_ACCELERATION = 50;
+    private static final double MAX_ACCELERATION = 90;
     private static final double MAX_JERK = 60.0;
     private static final double DT = 0.02;
-    private static final double FOLLOWER_KP = 0.6;
+    private static final double FOLLOWER_KP = 0.8;
     private static final double FOLLOWER_KI = 0.0;
-    private static final double FOLLOWER_KD = 0.0;
+    private static final double FOLLOWER_KD = 0.5;
     private static final double FOLLOWER_KV = 1.0 / MAX_VELOCITY;
     private static final double FOLLOWER_KA = 0.0;
 
@@ -85,9 +87,16 @@ public class PathCapableDrive extends Subsystem {
         // Setup
         config = new Trajectory.Config(Trajectory.FitMethod.HERMITE_CUBIC, Trajectory.Config.SAMPLES_HIGH, DT,
                 MAX_VELOCITY, MAX_ACCELERATION, MAX_JERK);
-        points = new Waypoint[] { new Waypoint(1, -1, 0), new Waypoint(0, 0, 0) };
-        trajectory = Pathfinder.generate(points, config);
-        configurePath(trajectory);
+        // points = new Waypoint[] { new Waypoint(2.997, -1.778, Pathfinder.d2r(-90)), new Waypoint(2.1844, 0, 0),  new Waypoint(0, 0, 0) };
+        //trajectory = Pathfinder.generate(points, config);
+        try{
+            File csvPath = new File("/home/lvuser/deploy/paths/LEVEL2_to_Rocket.right.pf1.csv");
+            trajectory = Pathfinder.readFromCSV(csvPath);
+            configurePath(trajectory);
+        } catch (Exception e){
+            SmartDashboard.putString("Config", "exception thrown" + e.getMessage());
+        }
+        
     }
 
     private void configurePath(Trajectory trajectory) {
@@ -129,11 +138,14 @@ public class PathCapableDrive extends Subsystem {
         SmartDashboard.putNumber("Left Distance", leftEncoder.getDistance());
         SmartDashboard.putNumber("Right Encoder", rightEncoder.get());
         SmartDashboard.putNumber("Right Distance", rightEncoder.getDistance());
+        SmartDashboard.putNumber("Max Jerk", maxJerk);
     }
 
     private double lastTimestamp = Timer.getFPGATimestamp();
     private double lastVelocity = 0.0;
     private double lastDistance = 0.0;
+    private double lastAcceleration = 0.0;
+    private double maxJerk = 0.0;
     private double maxVelocity = 0.0;
     private double maxAcceleration = 0.0;
     private double dt = 0.0;
@@ -145,6 +157,7 @@ public class PathCapableDrive extends Subsystem {
             writePercentsToDrive(leftPercent, -rightPercent);
             break;
         case PATH_FOLLOWING_INIT:
+            configurePath(trajectory);
             gyro.zeroYaw();
             leftEncoder.reset();
             rightEncoder.reset();
@@ -157,9 +170,9 @@ public class PathCapableDrive extends Subsystem {
             desiredHeading = 180.0 - Pathfinder.r2d(leftFollow.getHeading());
             angleDelta = desiredHeading - gyroHeading;
             // x percent per 180 degrees of error
-            turn = (15.0 / 180.0) * angleDelta;
-            writePercentsToDrive(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) + turn,
-                    -(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) - turn);
+            turn = (5.0 / 180.0) * angleDelta;
+            writePercentsToDrive(leftFollow.calculate(Math.abs(leftEncoder.get() + leftOffset)) - turn,
+                    -(rightFollow.calculate(Math.abs(rightEncoder.get() + rightOffset))) + turn);
             break;
         case STOPPED:
             stop();
@@ -169,6 +182,8 @@ public class PathCapableDrive extends Subsystem {
         dt = timestamp - lastTimestamp;
         double velocity = (distance - lastDistance) / dt;
         double acceleration = (velocity - lastVelocity) / dt;
+        double jerk = (acceleration - lastAcceleration) /dt;
+        maxJerk = Math.max(Math.abs(jerk), maxJerk);
         maxVelocity = Math.max(Math.abs(velocity), maxVelocity);
         maxAcceleration = Math.max(Math.abs(acceleration), maxAcceleration);
         lastVelocity = velocity;

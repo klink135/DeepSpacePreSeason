@@ -27,6 +27,8 @@ public class PathRobot2 extends TimedRobot {
 
     @Override
     public void robotInit() {
+        SmartDashboard.putString("Directory", System.getProperty("user.dir"));
+        
         chooser.setDefaultOption("Default Auto", DEFAULT_AUTO);
         chooser.addOption("Path Following Auto", CUSTOM_AUTO);
         SmartDashboard.putData("Auto choices", chooser);
